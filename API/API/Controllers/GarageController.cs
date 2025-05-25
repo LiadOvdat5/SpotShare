@@ -1,4 +1,5 @@
 ﻿using API.Data;
+using API.Interfaces;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,12 @@ namespace API.Controllers
     public class GarageController : ControllerBase
     {
         private readonly SpotShareDBContext _context;
+        private readonly IGarageRepository _garageRepository;
 
-        public GarageController(SpotShareDBContext context)
+        public GarageController(SpotShareDBContext context, IGarageRepository garageRepository)
         {
             _context = context;
+            _garageRepository = garageRepository;
         }
 
         /// <summary>
@@ -43,6 +46,24 @@ namespace API.Controllers
             }
             return Ok(garage);
         }
+
+        /// <summary>
+        /// Method: Get
+        /// Endpoint: `/api/garages/user/{userId}`
+        /// Description: Get all garages by user ID.
+        /// </summary>
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<List<Garage>>> GetGaragesByUserId(Guid userId)
+        {
+            var garages = await _garageRepository.GetGaragesByUserIdAsync(userId);
+            if (garages == null || !garages.Any())
+            {
+                return NotFound();
+            }
+            return Ok(garages);
+        }
+
+        
 
     }
 }

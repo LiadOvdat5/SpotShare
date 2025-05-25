@@ -48,11 +48,12 @@ namespace API.Controllers
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Name = userDTO.Name,
+                FullName = userDTO.FullName,
+                Username = userDTO.Username,
                 Email = userDTO.Email,
                 Phone = userDTO.Phone,
                 DateCreated = DateTime.UtcNow,
-                RoleId = userDTO.RoleId
+                Role = userDTO.Role
             };
 
             _context.Users.Add(user);
@@ -70,10 +71,11 @@ namespace API.Controllers
                 return NotFound();
             }
 
-            user.Name = updatedUserDTO.Name;
+            user.FullName = updatedUserDTO.FullName;
+            user.Username = updatedUserDTO.Username;
             user.Email = updatedUserDTO.Email;
             user.Phone = updatedUserDTO.Phone;
-            user.RoleId = updatedUserDTO.RoleId;
+            user.Role = updatedUserDTO.Role;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();

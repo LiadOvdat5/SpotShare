@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(SpotShareDBContext))]
-    partial class SpotShareDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250524091106_UpdateUserModel")]
+    partial class UpdateUserModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -148,15 +151,8 @@ namespace API.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -175,7 +171,7 @@ namespace API.Migrations
                             FullName = "Alice Johnson",
                             PasswordHash = "hashed_password_1",
                             Phone = "555-1234",
-                            Role = "User",
+                            RoleId = 1,
                             Username = "Alice1"
                         },
                         new
@@ -186,7 +182,7 @@ namespace API.Migrations
                             FullName = "Bob Smith",
                             PasswordHash = "hashed_password_2",
                             Phone = "555-5678",
-                            Role = "User",
+                            RoleId = 2,
                             Username = "Bob2"
                         },
                         new
@@ -196,7 +192,7 @@ namespace API.Migrations
                             Email = "charlie@example.com",
                             FullName = "Charlie Evans",
                             PasswordHash = "hashed_password_3",
-                            Role = "User",
+                            RoleId = 1,
                             Username = "Charlie3"
                         },
                         new
@@ -207,7 +203,7 @@ namespace API.Migrations
                             FullName = "Diana Carter",
                             PasswordHash = "hashed_password_4",
                             Phone = "555-8765",
-                            Role = "User",
+                            RoleId = 3,
                             Username = "Diana4"
                         });
                 });
