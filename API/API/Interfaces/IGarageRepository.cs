@@ -1,4 +1,5 @@
-﻿using API.Models;
+﻿using API.DTOs;
+using API.Models;
 
 namespace API.Interfaces
 {
@@ -6,8 +7,8 @@ namespace API.Interfaces
     {
 
         Task<IEnumerable<Garage>> GetGaragesByUserIdAsync(Guid userId);
-
-        Task<Garage> CreateGarageAsync(Garage garage);
-
+        Task<Garage> CreateGarageAsync(CreateGarageDTO garageDTO, Guid userId);
+        Task<Garage> UpdateGarageAsync(Guid garageId, GarageUpdateDTO garageDTO, Guid userId);
+        Task<bool> DeleteGarageAsync(Guid garageId, Guid userId);
     }
 }

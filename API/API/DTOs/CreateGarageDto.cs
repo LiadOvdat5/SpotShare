@@ -1,6 +1,6 @@
 ﻿namespace API.DTOs
 {
-    public class CreateGarageDto
+    public class CreateGarageDTO
     {
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
