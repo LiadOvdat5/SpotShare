@@ -127,6 +127,11 @@ namespace API.Controllers
 
         }
 
+        /// <summary>
+        /// Method: Delete
+        /// Endpoint: `/api/garages/{garageId}`
+        /// Description: Delete a garage by ID.
+        /// </summary>
         [HttpDelete("{garageId}")]
         [Authorize(Roles = "Admin, User")]
         public async Task<IActionResult> DeleteGarage(Guid garageId)
@@ -145,5 +150,73 @@ namespace API.Controllers
             }
             return NoContent();
         }
+
+        /// <summary>
+        /// Method: Post
+        /// Endpoint: `/api/garages/{garageId}/availability`
+        /// Description: Create availability slots for a garage.
+        /// </summary>
+        [HttpPost("{garageId}/availability")]
+        [Authorize(Roles = "Admin, User")]
+        public async Task<ActionResult<AvailabilitySlot>> CreateAvailabilitySlots(Guid garageId, [FromBody] CreateAvailabilitySlotDTO slotDTO)
+        {
+            if (slotDTO == null)
+            {
+                return BadRequest("Availability slot data is null");
+            }
+
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdString == null) return Unauthorized();
+            Guid userId = Guid.Parse(userIdString);
+
+            var createdSlot = await _garageRepository.CreateAvailabilitySlotsAsync(garageId, slotDTO, userId);
+            if (createdSlot == null)
+            {
+                return NotFound("Garage not found or you do not have permission to create availability slots.");
+            }
+
+            return CreatedAtAction(nameof(GetGarage), new { id = garageId }, createdSlot);
+        }
+
+        /// <summary>
+        /// Method: Get
+        /// Endpoint: `/api/garages/{garageId}/availability`
+        /// Description: Get all availability slots for a garage.
+        /// </summary>
+        [HttpGet("{garageId}/availability")]
+        [Authorize(Roles = "Admin, User")]
+        public async Task<ActionResult<IEnumerable<AvailabilitySlot>>> GetAvailabilitySlotsByGarageId(Guid garageId)
+        {
+            var slots = await _garageRepository.GetAvailabilitySlotsByGarageIdAsync(garageId);
+            if (slots == null || !slots.Any())
+            {
+                return NotFound("No availability slots found for this garage.");
+            }
+            return Ok(slots);
+        }
+
+        /// <summary>
+        /// Method: Delete
+        /// Endpoint: `/api/garages/availability/{slotId}`
+        /// Description: Delete an availability slot by ID.
+        /// </summary>
+        [HttpDelete("availability/{slotId}")]
+        [Authorize(Roles = "Admin, User")]
+        public async Task<IActionResult> DeleteAvailabilitySlot(Guid slotId)
+        {
+            if (slotId == Guid.Empty)
+                return BadRequest("Invalid slot ID");
+
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdString == null) return Unauthorized();
+            Guid userId = Guid.Parse(userIdString);
+
+            var result = await _garageRepository.DeleteAvailabilitySlot(slotId, userId);
+            if (!result)
+                return NotFound("Availability slot not found or you do not have permission to delete it.");
+            
+            return NoContent();
+        }
+
     }
 }

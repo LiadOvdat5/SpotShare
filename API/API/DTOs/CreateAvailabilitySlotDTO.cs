@@ -1,9 +1,7 @@
-﻿namespace API.Models
+﻿namespace API.DTOs
 {
-    public class AvailabilitySlots
+    public class CreateAvailabilitySlotDTO
     {
-        public Guid Id { get; set; } // PK  
-        public Guid GarageId { get; set; } // FK → Garages.Id  
         public int DayOfWeek { get; set; } // 0 = Sunday, 6 = Saturday  
         public TimeSpan StartTime { get; set; } // e.g. 08:00  
         public TimeSpan EndTime { get; set; } // e.g. 18:00  

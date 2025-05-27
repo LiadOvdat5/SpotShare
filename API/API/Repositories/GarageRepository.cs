@@ -83,6 +83,9 @@ namespace API.Repositories
 
         }
 
+        /// <summary>
+        /// Delete a garage.
+        /// </summary>
         public async Task<bool> DeleteGarageAsync(Guid garageId, Guid userId)
         {
             var garage = await _context.Garages.FindAsync(garageId);
@@ -95,6 +98,68 @@ namespace API.Repositories
             await _context.SaveChangesAsync();
             return true; // Garage deleted successfully
         }
+
+        /// <summary>
+        /// Create availability slots for a garage.
+        /// </summary>
+        public async Task<AvailabilitySlot> CreateAvailabilitySlotsAsync(Guid garageId, CreateAvailabilitySlotDTO slotDTO, Guid userId)
+        {
+            // Check if garage exists and belongs to the user
+            var garage = await _context.Garages.FindAsync(garageId);
+            if (garage == null || garage.OwnerId != userId)
+            {
+                throw new UnauthorizedAccessException("You do not have permission to create availability slots for this garage.");
+            }
+
+            var availabilitySlot = new AvailabilitySlot
+            {
+                Id = Guid.NewGuid(),
+                GarageId = garageId,
+                DayOfWeek = slotDTO.DayOfWeek,
+                StartTime = slotDTO.StartTime,
+                EndTime = slotDTO.EndTime,
+                IsRecurring = slotDTO.IsRecurring 
+            };
+            
+            _context.AvailabilitySlots.Add(availabilitySlot);
+            await _context.SaveChangesAsync();
+
+            return availabilitySlot;
+        }
+
+        /// <summary>
+        /// Get availability slots by garage ID.
+        /// </summary>
+        public async Task<IEnumerable<AvailabilitySlot>> GetAvailabilitySlotsByGarageIdAsync(Guid garageId)
+        {
+            return await _context.AvailabilitySlots
+                .Where(slot => slot.GarageId == garageId)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Delete an availability slot by ID.
+        /// </summary>
+        public async Task<bool> DeleteAvailabilitySlot(Guid slotId, Guid userId)
+        {
+            var slot = await _context.AvailabilitySlots.FindAsync(slotId);
+            if (slot == null)
+            {
+                return false; // Slot not found 
+            }
+
+            var garage = await _context.Garages.FindAsync(slot?.GarageId);
+            if (garage == null || garage.OwnerId != userId)
+            {
+                return false; // Garage not found or user does not own it
+            }
+
+            _context.AvailabilitySlots.Remove(slot);
+            await _context.SaveChangesAsync();
+
+            return true; // Slot deleted successfully
+        }
+
     }
     
 }
