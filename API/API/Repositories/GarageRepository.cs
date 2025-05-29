@@ -111,14 +111,47 @@ namespace API.Repositories
                 throw new UnauthorizedAccessException("You do not have permission to create availability slots for this garage.");
             }
 
+            // Validate the slotDTO properties
+            if (slotDTO.StartDate >= slotDTO.EndDate)
+            {
+                throw new ArgumentException("Start date must be before end date.");
+            }
+            if (slotDTO.StartTime >= slotDTO.EndTime)
+            {
+                throw new ArgumentException("Start time must be before end time.");
+            }
+            if (slotDTO.DayOfWeek < 0 || slotDTO.DayOfWeek > 6)
+            {
+                throw new ArgumentException("Day of week must be between 0 (Sunday) and 6 (Saturday).");
+            }
+            if (slotDTO.StartDate.Date < DateTime.UtcNow.Date)
+            {
+                throw new ArgumentException("Start date cannot be in the past.");
+            }
+
+
+            // Check if another slot already exists on the same time and day  
+            var existingSlot = await _context.AvailabilitySlots
+               .Where(slot => slot.GarageId == garageId && slot.DayOfWeek == slotDTO.DayOfWeek) // same garage and day of week  
+               .Where(slot => slot.StartDate <= slotDTO.EndDate && slot.EndDate >= slotDTO.StartDate) // between start and end date of the new slot
+               .FirstOrDefaultAsync(slot =>
+                   (slot.StartTime < slotDTO.EndTime && slot.EndTime > slotDTO.StartTime)); // overlapping time  
+
+            if (existingSlot != null)
+            {
+                throw new InvalidOperationException($"An availability slot already exists for this garage on the same day and overlapping time. Slot ID: {existingSlot.Id}");
+            }
+
+
             var availabilitySlot = new AvailabilitySlot
             {
                 Id = Guid.NewGuid(),
                 GarageId = garageId,
+                StartDate = slotDTO.StartDate,
+                EndDate = slotDTO.EndDate,
                 DayOfWeek = slotDTO.DayOfWeek,
                 StartTime = slotDTO.StartTime,
-                EndTime = slotDTO.EndTime,
-                IsRecurring = slotDTO.IsRecurring 
+                EndTime = slotDTO.EndTime
             };
             
             _context.AvailabilitySlots.Add(availabilitySlot);
