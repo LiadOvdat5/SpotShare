@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using API.Repositories;
 using API.Interfaces;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -46,6 +47,12 @@ namespace API.Controllers
         [Authorize(Roles = "Admin, User")]
         public async Task<ActionResult<User>> GetUser(Guid id)
         {
+            // Check if the user is requesting their own details
+            if (User.IsInRole("User") && User.FindFirst(ClaimTypes.NameIdentifier)?.Value != id.ToString())
+            {
+                return Forbid(); // User can only access their own details
+            }
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
@@ -54,45 +61,31 @@ namespace API.Controllers
             return Ok(user);
         }
 
-        /* Deleted - we have register
-            /// <summary>
-            /// Method: Post
-            /// Endpoint: `/api/users`
-            /// Description: Create a new user (Admin only).
-            /// </summary>
-            [HttpPost]
-            [Authorize(Roles = "Admin")]
-            public async Task<ActionResult<User>> CreateUser([FromBody] UserDTO userDTO)
-            {
-                var user = await _authRepo.RegisterAsync(userDTO);
-
-                if (user == null)
-                    return BadRequest("Username already exists");
-
-
-                return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
-            }
-         */
-
         /// <summary>
         /// Method: Put
         /// Endpoint: `/api/users/{id}`
         /// Description: Update user details by ID (Admin or User).
         /// </summary>
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin, User")]
-        public async Task<ActionResult> UpdateUser(Guid id, [FromBody] UserDTO updatedUserDTO)
+        public async Task<ActionResult> UpdateUser([FromBody] UserUpdateDTO updatedUserDTO)
         {
+            var stringId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (stringId == null)
+                return Unauthorized();
+
+            var id = Guid.Parse(stringId);
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.FullName = updatedUserDTO.FullName;
-            user.Username = updatedUserDTO.Username;
-            user.Email = updatedUserDTO.Email;
-            user.Phone = updatedUserDTO.Phone;
+            user.FullName = updatedUserDTO.FullName ?? user.FullName;
+            user.Username = updatedUserDTO.Username ?? user.Username;
+            user.Email = updatedUserDTO.Email ?? user.Email;
+            user.Phone = updatedUserDTO.Phone ?? user.Phone;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
