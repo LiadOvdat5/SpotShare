@@ -93,7 +93,6 @@ namespace API.Controllers
             user.Username = updatedUserDTO.Username;
             user.Email = updatedUserDTO.Email;
             user.Phone = updatedUserDTO.Phone;
-            user.Role = updatedUserDTO.Role;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();

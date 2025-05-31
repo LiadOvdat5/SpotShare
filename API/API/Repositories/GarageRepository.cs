@@ -40,9 +40,9 @@ namespace API.Repositories
                 Title = garageDTO.Title,
                 Description = garageDTO.Description,
                 Address = garageDTO.Address,
-                Latitude = garageDTO.Latitude,
-                Longitude = garageDTO.Longitude,
-                ImageUrl = garageDTO.ImageUrl,
+                Latitude = garageDTO.Latitude ?? 0,
+                Longitude = garageDTO.Longitude ?? 0,
+                ImageUrl = garageDTO.ImageUrl ?? null, // TODO: In the furture, default image URL can be set if not provided
                 PricePerHour = garageDTO.PricePerHour,
                 
             };

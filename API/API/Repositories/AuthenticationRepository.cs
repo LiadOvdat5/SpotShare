@@ -40,9 +40,9 @@ namespace API.Repositories
             user.Email = userDto.Email;
             user.Username = userDto.Username;
             user.Phone = userDto.Phone;
-            user.Role = userDto.Role;
             user.DateCreated = DateTime.UtcNow;
 
+            user.Role = "User"; // Default role
 
             var hashedPassword = new PasswordHasher<User>()
                 .HashPassword(new User(), userDto.Password);
