@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using API.Repositories;
 using API.Interfaces;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Controllers
 {
@@ -98,8 +99,6 @@ namespace API.Controllers
         /// Endpoint: `/api/users/{id}`
         /// Description: Delete a user by ID (Admin or User).
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin, User")]
         public async Task<ActionResult> DeleteUser(Guid id)
@@ -115,6 +114,44 @@ namespace API.Controllers
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Method: Put
+        /// Endpoint: `/api/users/{id}/password`
+        /// Description: Update user password by ID (Admin or User).
+        /// </summary>
+        [HttpPut("{id}/password")]
+        [Authorize(Roles = "Admin, User")]
+        public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDTO updatePasswordDTO)
+        {
+            var stringId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (stringId == null)
+                return Unauthorized();
+            var userId = Guid.Parse(stringId);
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, updatePasswordDTO.CurrentPassword)
+                == PasswordVerificationResult.Failed)
+            {
+                return Unauthorized("Password provided is wrong.");
+            }
+
+            var hashedPassword = new PasswordHasher<User>()
+                .HashPassword(user, updatePasswordDTO.NewPassword);
+
+            user.PasswordHash = hashedPassword;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+
+        }
+
+
+
     }
-   
+
 }

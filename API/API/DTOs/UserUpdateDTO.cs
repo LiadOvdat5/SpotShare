@@ -11,13 +11,6 @@ namespace API.DTOs
         [StringLength(50, ErrorMessage = "Username cannot be longer than 50 characters")]
         public string? Username { get; set; } = string.Empty;
 
-        //[StringLength(100, ErrorMessage = "Password must be at least 6 characters long", MinimumLength = 6)]
-        //public string? Password { get; set; } = string.Empty;
-
-        // TODO: if password is provided, confirm password must also be provided OR change update password to different endpoint
-        //[Compare("Password", ErrorMessage = "Passwords does not match.")]
-        //public string? ConfirmPassword { get; set; } = string.Empty;
-
         [EmailAddress(ErrorMessage = "Invalid email address format")]
         public string? Email { get; set; } = string.Empty;
 

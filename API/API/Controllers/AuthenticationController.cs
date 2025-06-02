@@ -17,9 +17,6 @@ namespace API.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        //static user for authentication simulation
-        public static User user = new User();
-
         private readonly IConfiguration configuration;
         private readonly IAuthenticationRepository authRepo;
         public AuthenticationController(IConfiguration configuration, IAuthenticationRepository authenticationRepository)
