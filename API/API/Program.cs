@@ -49,6 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Register application services and repositories
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
 builder.Services.AddScoped<IGarageRepository, GarageRepository>();
+builder.Services.AddScoped<ISearchRepository, SearchRepository>();
 
 
 var app = builder.Build();
