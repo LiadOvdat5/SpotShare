@@ -20,19 +20,19 @@ namespace API.Controllers
 
         /// <summary>
         /// Method: GET
-        /// Endpoint: `/api/search`
-        /// Description: Search for garages based on location, date and time. (SearchDTO)
+        /// Endpoint: `/api/search/withTime`
+        /// Description: Search for garages based on location, date and time. (SearchLocationDTO, SearchTimeDTO)
         /// </summary>
-        [HttpGet]
+        [HttpGet("withTime")]
         [Authorize]
-        public async Task<ActionResult<List<GarageWithAvailabilityDTO>>> SearchGarages([FromQuery] SearchDTO searchDto)
+        public async Task<ActionResult<List<GarageWithAvailabilityDTO>>> SearchGaragesByLocationAndTime([FromQuery] SearchLocationDTO searchLocationDto, [FromQuery] SearchTimeDTO searchTimeDto)
         {
-            if (searchDto == null)
+            if (searchLocationDto == null)
             {
                 return BadRequest("Search parameters cannot be null.");
             }
 
-            var result = await _searchRepo.SearchGarages(searchDto);
+            var result = await _searchRepo.SearchGarages(searchLocationDto, searchTimeDto);
 
             if (result == null || result.Count == 0)
                 return NotFound("No garages found matching the search criteria.");
@@ -41,6 +41,25 @@ namespace API.Controllers
 
         }
 
-
+        /// <summary>
+        /// Method: GET
+        /// Endpoint: `/api/search/range`
+        /// Description: Get all garages within a specified range from a given location. (SearchLocationDTO)
+        /// </summary>
+        /// <param name="searchDto"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize]
+        public async Task<ActionResult<List<GarageDTO>>> GetGaragesWithinRange([FromQuery] SearchLocationDTO searchDto)
+        {
+            if (searchDto == null)
+            {
+                return BadRequest("Search parameters cannot be null.");
+            }
+            var garages = await _searchRepo.GetGaragesWithinRange(searchDto);
+            if (garages == null || garages.Count == 0)
+                return NotFound("No garages found within the specified range.");
+            return Ok(garages);
+        }
     }
 }

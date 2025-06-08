@@ -1,4 +1,5 @@
 ﻿using API.DTOs;
+using API.Models;
 
 namespace API.Interfaces
 {
@@ -6,7 +7,9 @@ namespace API.Interfaces
     {
         public double GetDistanceInKm(double lat1, double lon1, double lat2, double lon2);
 
-        public Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchDTO searchDto);
+        public Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchLocationDTO searchLocationDto, SearchTimeDTO searchTimeDto);
+
+        public Task<List<GarageDTO>> GetGaragesWithinRange(SearchLocationDTO searchDto);
 
     }
 }

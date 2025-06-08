@@ -1,6 +1,8 @@
 ﻿using API.Data;
 using API.DTOs;
 using API.Interfaces;
+using API.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Repositories
@@ -36,31 +38,17 @@ namespace API.Repositories
         /// </summary>
         private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
 
-
-        public async Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchDTO searchDto)
+        /// <summary>
+        /// Searches for garages within a specified range and availability based on the provided date & time.
+        /// </summary>
+        public async Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchLocationDTO searchLocationDto, SearchTimeDTO searchTimeDto)
         {
-
-            // Get all active garages from the database
-            var allGarages = await _context.Garages
-            .Where(g => g.IsActive)
-            .ToListAsync();
-
-            Console.WriteLine($"Total Garages Found: {allGarages.Count}");
-
-            if (allGarages == null || allGarages.Count == 0)
-                return null; 
-
-            // Filter by the distance using the Haversine formula
-            var garagesInRange = allGarages
-            .Where(g => GetDistanceInKm(searchDto.Latitude, searchDto.Longitude, g.Latitude, g.Longitude) <= searchDto.KmRange)
-            .ToList();
-
-            if (garagesInRange == null || garagesInRange.Count == 0)
-                return null;
+            
+            List<GarageDTO> garagesInRangeDTO = await GetGaragesWithinRange(searchLocationDto);
 
 
             // Extract just the garage IDs
-            var garageIds = garagesInRange.Select(g => g.Id).ToList();
+            var garageIds = garagesInRangeDTO.Select(g => g.Id).ToList();
 
             // Use the list of IDs in the LINQ query (this can be translated to SQL)
             var availabilitySlots = await _context.AvailabilitySlots
@@ -73,10 +61,10 @@ namespace API.Repositories
 
             // Filter Availability Slots based on the provided date and time range
             var filteredSlots = availabilitySlots
-                .Where(slot => slot.StartDate <= searchDto.StartDate &&
-                               slot.EndDate >= searchDto.EndDate &&
-                               slot.StartTime <= searchDto.StartTime &&
-                               slot.EndTime >= searchDto.EndTime)
+                .Where(slot => slot.StartDate <= searchTimeDto.StartDate &&
+                               slot.EndDate >= searchTimeDto.EndDate &&
+                               slot.StartTime <= searchTimeDto.StartTime &&
+                               slot.EndTime >= searchTimeDto.EndTime)
                 .ToList();
 
             if (filteredSlots == null || filteredSlots.Count == 0)
@@ -84,7 +72,7 @@ namespace API.Repositories
 
 
             // Remove garages that have no availability slots in the filtered list
-            garagesInRange = garagesInRange
+            garagesInRangeDTO = garagesInRangeDTO
                 .Where(garage => filteredSlots.Any(slot => slot.GarageId == garage.Id))
                 .ToList();
 
@@ -93,25 +81,52 @@ namespace API.Repositories
 
 
             // Create list of GarageWithAvailabilityDTO to return
-            var garageWithAvailabilityList = garagesInRange.Select(garage => new GarageWithAvailabilityDTO
+            var garageWithAvailabilityList = garagesInRangeDTO.Select(garageDTO => new GarageWithAvailabilityDTO
             {
-                Garage = new GarageDTO
-                {
-                    Id = garage.Id,
-                    Title = garage.Title,
-                    Description = garage.Description,
-                    Address = garage.Address,
-                    Latitude = garage.Latitude,
-                    Longitude = garage.Longitude,
-                    ImageUrl = garage.ImageUrl,
-                    PricePerHour = garage.PricePerHour,
-                },
+                Garage = garageDTO,
                 MatchingSlots = filteredSlots
-                    .Where(slot => slot.GarageId == garage.Id).ToList()
+       .Where(slot => slot.GarageId == garageDTO.Id).ToList()
             }).ToList();
 
             return garageWithAvailabilityList;
 
+        }
+
+        /// <summary>
+        /// Retrieves all active garages within the specified range from the search DTO.
+        /// </summary>
+        public async Task<List<GarageDTO>> GetGaragesWithinRange(SearchLocationDTO searchLocationDto)
+        {
+            // Get all active garages from the database
+            var allGarages = await _context.Garages
+            .Where(g => g.IsActive)
+            .ToListAsync();
+
+            Console.WriteLine($"Total Garages Found: {allGarages.Count}");
+
+            if (allGarages == null || allGarages.Count == 0)
+                return null;
+
+            // Filter by the distance using the Haversine formula
+            var garagesInRange = allGarages
+            .Where(g => GetDistanceInKm(searchLocationDto.Latitude, searchLocationDto.Longitude, g.Latitude, g.Longitude) <= searchLocationDto.KmRange)
+            .ToList();
+            if (garagesInRange == null || garagesInRange.Count == 0)
+                return null;
+
+            var garagesInRangeDTO = garagesInRange.Select(g => new GarageDTO
+            {
+                Id = g.Id,
+                Title = g.Title,
+                Description = g.Description,
+                Address = g.Address,
+                Latitude = g.Latitude,
+                Longitude = g.Longitude,
+                ImageUrl = g.ImageUrl,
+                PricePerHour = g.PricePerHour
+            }).ToList();
+
+            return garagesInRangeDTO;
         }
 
 

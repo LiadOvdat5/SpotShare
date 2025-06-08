@@ -2,22 +2,12 @@
 
 namespace API.DTOs
 {
-    public class SearchDTO
+    public class SearchTimeDTO
     {
-        [Required] 
-        public double Latitude { get; set; }
-        
-        [Required]
-        public double Longitude { get; set; }
-
-        [Required]
-        [Range(0.1, 100)] 
-        public double KmRange { get; set; } // Search radius in km
-        
         [Required]
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
-        
+
         [Required]
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
