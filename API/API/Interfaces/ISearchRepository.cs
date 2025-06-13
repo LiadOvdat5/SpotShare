@@ -11,5 +11,7 @@ namespace API.Interfaces
 
         public Task<List<GarageDTO>> GetGaragesWithinRange(SearchLocationDTO searchDto);
 
+        public Task<GarageWithAvailabilityDTO> SearchSlotsForGarageWithTime(Guid garageId, SearchTimeDTO searchTimeDto);
+
     }
 }

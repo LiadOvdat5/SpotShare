@@ -102,7 +102,7 @@ namespace API.Repositories
             .Where(g => g.IsActive)
             .ToListAsync();
 
-            Console.WriteLine($"Total Garages Found: {allGarages.Count}");
+            //Console.WriteLine($"Total Garages Found: {allGarages.Count}");
 
             if (allGarages == null || allGarages.Count == 0)
                 return null;
@@ -129,6 +129,57 @@ namespace API.Repositories
             return garagesInRangeDTO;
         }
 
+        /// <summary>
+        /// Searches for available slots for a specific garage based on the provided date and time.
+        /// </summary>
+        public async Task<GarageWithAvailabilityDTO> SearchSlotsForGarageWithTime(Guid garageId, SearchTimeDTO searchTimeDto)
+        {
+            // Get the garage by ID
+            var garage = await _context.Garages
+                .Where(g => g.Id == garageId && g.IsActive)
+                .FirstOrDefaultAsync();
+            
+            if (garage == null)
+                return null;
 
+            // Get availability slots for the garage
+            var availabilitySlots = await _context.AvailabilitySlots
+                .Where(slot => slot.GarageId == garageId)
+                .ToListAsync();
+
+            if (availabilitySlots == null || availabilitySlots.Count == 0)
+                return null;
+
+            // Filter the availability slots based on the provided date and time range
+            var filteredSlots = availabilitySlots
+                .Where(slot => slot.StartDate <= searchTimeDto.StartDate &&
+                               slot.EndDate >= searchTimeDto.EndDate &&
+                               slot.StartTime <= searchTimeDto.StartTime &&
+                               slot.EndTime >= searchTimeDto.EndTime)
+                .ToList();
+
+            if (filteredSlots == null || filteredSlots.Count == 0)
+                return null;
+
+            // create GarageWithAvailabilityDTO object to return
+            var garageWithAvailability = new GarageWithAvailabilityDTO
+            {
+                Garage = new GarageDTO
+                {
+                    Id = garage.Id,
+                    Title = garage.Title,
+                    Description = garage.Description,
+                    Address = garage.Address,
+                    Latitude = garage.Latitude,
+                    Longitude = garage.Longitude,
+                    ImageUrl = garage.ImageUrl,
+                    PricePerHour = garage.PricePerHour
+                },
+                MatchingSlots = filteredSlots
+            };
+
+            // return the GarageWithAvailabilityDTO object
+            return garageWithAvailability;
+        }
     }
 }

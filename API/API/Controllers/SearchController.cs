@@ -46,8 +46,6 @@ namespace API.Controllers
         /// Endpoint: `/api/search/range`
         /// Description: Get all garages within a specified range from a given location. (SearchLocationDTO)
         /// </summary>
-        /// <param name="searchDto"></param>
-        /// <returns></returns>
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<List<GarageDTO>>> GetGaragesWithinRange([FromQuery] SearchLocationDTO searchDto)
@@ -61,5 +59,27 @@ namespace API.Controllers
                 return NotFound("No garages found within the specified range.");
             return Ok(garages);
         }
+
+        /// <summary>
+        /// Method: GET
+        /// Endpoint: `/api/search/slotsForGarage`
+        /// Description: Search for available slots for a specific garage based on the provided date and time. (GarageId, SearchTimeDTO)
+        /// </summary>
+        [HttpGet("slotsForGarage")]
+        [Authorize]
+        public async Task<ActionResult<GarageWithAvailabilityDTO>> SearchSlotsForGarage([FromQuery] Guid garageId, [FromQuery] SearchTimeDTO searchTimeDto)
+        {
+            if (garageId == Guid.Empty || searchTimeDto == null)
+            {
+                return BadRequest("Invalid garage ID or search time parameters.");
+            }
+            var result = await _searchRepo.SearchSlotsForGarageWithTime(garageId, searchTimeDto);
+
+            if (result == null)
+                return NotFound("No availability slots found for the specified garage.");
+
+            return Ok(result);
+        }
+
     }
 }
