@@ -8,6 +8,7 @@ namespace API.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Garage> Garages => Set<Garage>();
         public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
+        public DbSet<Booking> Bookings => Set<Booking>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
