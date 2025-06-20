@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(SpotShareDBContext))]
-    [Migration("20250619191034_AddBookingsSet")]
-    partial class AddBookingsSet
+    [Migration("20250620080059_AddBookingTable")]
+    partial class AddBookingTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,11 +56,9 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.Booking", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateRequested")
                         .HasColumnType("datetime2");

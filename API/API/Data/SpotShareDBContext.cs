@@ -10,6 +10,7 @@ namespace API.Data
         public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
         public DbSet<Booking> Bookings => Set<Booking>();
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().HasData(

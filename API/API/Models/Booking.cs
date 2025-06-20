@@ -2,7 +2,7 @@
 {
     public class Booking
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public Guid GarageId { get; set; } // FK → Garages.Id
         public Guid RenterId { get; set; } // FK → Users.Id (Parking Searcher)
         public DateTime StartDate { get; set; } // Rental start date
