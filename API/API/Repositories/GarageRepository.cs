@@ -102,7 +102,7 @@ namespace API.Repositories
         /// <summary>
         /// Create availability slots for a garage.
         /// </summary>
-        public async Task<AvailabilitySlot> CreateAvailabilitySlotsAsync(Guid garageId, CreateAvailabilitySlotDTO slotDTO, Guid userId)
+        public async Task<List<AvailabilitySlot>> CreateAvailabilitySlotsAsync(Guid garageId, CreateAvailabilitySlotDTO slotDTO, Guid userId)
         {
             // Check if garage exists and belongs to the user
             var garage = await _context.Garages.FindAsync(garageId);
@@ -111,54 +111,53 @@ namespace API.Repositories
                 throw new UnauthorizedAccessException("You do not have permission to create availability slots for this garage.");
             }
 
-            // Validate the slotDTO properties
+            // Validate slotDTO values
             if (slotDTO.StartDate >= slotDTO.EndDate)
-            {
                 throw new ArgumentException("Start date must be before end date.");
-            }
+
             if (slotDTO.StartTime >= slotDTO.EndTime)
-            {
                 throw new ArgumentException("Start time must be before end time.");
-            }
+
             if (slotDTO.DayOfWeek < 0 || slotDTO.DayOfWeek > 6)
-            {
                 throw new ArgumentException("Day of week must be between 0 (Sunday) and 6 (Saturday).");
-            }
+
             if (slotDTO.StartDate.Date < DateTime.UtcNow.Date)
-            {
                 throw new ArgumentException("Start date cannot be in the past.");
+
+            // Generate all matching dates
+            var slots = new List<AvailabilitySlot>();
+            for (var date = slotDTO.StartDate.Date; date <= slotDTO.EndDate.Date; date = date.AddDays(1))
+            {
+                if ((int)date.DayOfWeek != slotDTO.DayOfWeek)
+                    continue;
+
+                // Check for overlap with existing slots for this garage and date
+                bool conflict = await _context.AvailabilitySlots.AnyAsync(existing =>
+                    existing.GarageId == garageId &&
+                    existing.Date.Date == date &&
+                    existing.StartTime < slotDTO.EndTime &&
+                    existing.EndTime > slotDTO.StartTime);
+
+                if (conflict)
+                    throw new InvalidOperationException($"An availability slot already exists on {date:yyyy-MM-dd} with overlapping time.");
+
+                var slot = new AvailabilitySlot
+                {
+                    Id = Guid.NewGuid(),
+                    GarageId = garageId,
+                    Date = date,
+                    StartTime = slotDTO.StartTime,
+                    EndTime = slotDTO.EndTime
+                };
+
+                slots.Add(slot);
+                _context.AvailabilitySlots.Add(slot);
             }
 
-
-            // Check if another slot already exists on the same time and day  
-            var existingSlot = await _context.AvailabilitySlots
-               .Where(slot => slot.GarageId == garageId && slot.DayOfWeek == slotDTO.DayOfWeek) // same garage and day of week  
-               .Where(slot => slot.StartDate <= slotDTO.EndDate && slot.EndDate >= slotDTO.StartDate) // between start and end date of the new slot
-               .FirstOrDefaultAsync(slot =>
-                   (slot.StartTime < slotDTO.EndTime && slot.EndTime > slotDTO.StartTime)); // overlapping time  
-
-            if (existingSlot != null)
-            {
-                throw new InvalidOperationException($"An availability slot already exists for this garage on the same day and overlapping time. Slot ID: {existingSlot.Id}");
-            }
-
-
-            var availabilitySlot = new AvailabilitySlot
-            {
-                Id = Guid.NewGuid(),
-                GarageId = garageId,
-                StartDate = slotDTO.StartDate,
-                EndDate = slotDTO.EndDate,
-                DayOfWeek = slotDTO.DayOfWeek,
-                StartTime = slotDTO.StartTime,
-                EndTime = slotDTO.EndTime
-            };
-            
-            _context.AvailabilitySlots.Add(availabilitySlot);
             await _context.SaveChangesAsync();
-
-            return availabilitySlot;
+            return slots;
         }
+
 
         /// <summary>
         /// Get availability slots by garage ID.

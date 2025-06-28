@@ -41,6 +41,7 @@ namespace API.Repositories
         /// <summary>
         /// Searches for garages within a specified range and availability based on the provided date & time.
         /// </summary>
+        /*
         public async Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchLocationDTO searchLocationDto, SearchTimeDTO searchTimeDto)
         {
             
@@ -91,6 +92,44 @@ namespace API.Repositories
             return garageWithAvailabilityList;
 
         }
+        */
+
+        public async Task<List<GarageWithAvailabilityDTO>> SearchGarages(SearchLocationDTO searchLocationDto, SearchTimeDTO searchTimeDto)
+        {
+            // Get garages in location range
+            List<GarageDTO> garagesInRangeDTO = await GetGaragesWithinRange(searchLocationDto);
+            var garageIds = garagesInRangeDTO.Select(g => g.Id).ToList();
+
+            // Prepare list of search dates
+            var searchDates = Enumerable.Range(0, (searchTimeDto.EndDate - searchTimeDto.StartDate).Days + 1)
+                .Select(offset => searchTimeDto.StartDate.Date.AddDays(offset))
+                .ToList();
+
+            // Fetch availability slots within those dates and time range
+            var availabilitySlots = await _context.AvailabilitySlots
+                .Where(slot =>
+                    garageIds.Contains(slot.GarageId) &&
+                    searchDates.Contains(slot.Date.Date) &&
+                    slot.StartTime <= searchTimeDto.StartTime &&
+                    slot.EndTime >= searchTimeDto.EndTime
+                ).ToListAsync();
+
+            // Group slots by garage
+            var result = garagesInRangeDTO
+                .Select(garage => new GarageWithAvailabilityDTO
+                {
+                    Garage = garage,
+                    MatchingSlots = availabilitySlots
+                        .Where(slot => slot.GarageId == garage.Id)
+                        .OrderBy(slot => slot.Date)
+                        .ToList()
+                })
+                .Where(g => g.MatchingSlots.Any())
+                .ToList();
+
+            return result;
+        }
+
 
         /// <summary>
         /// Retrieves all active garages within the specified range from the search DTO.
@@ -142,20 +181,24 @@ namespace API.Repositories
             if (garage == null)
                 return null;
 
-            // Get availability slots for the garage
+            // Build list of dates in the range
+            var searchDates = Enumerable.Range(0, (searchTimeDto.EndDate - searchTimeDto.StartDate).Days + 1)
+                .Select(offset => searchTimeDto.StartDate.Date.AddDays(offset))
+                .ToList();
+
+            // Get all availability slots for those dates
             var availabilitySlots = await _context.AvailabilitySlots
-                .Where(slot => slot.GarageId == garageId)
+                .Where(slot => slot.GarageId == garageId && searchDates.Contains(slot.Date))
                 .ToListAsync();
 
             if (availabilitySlots == null || availabilitySlots.Count == 0)
                 return null;
 
-            // Filter the availability slots based on the provided date and time range
+            // Filter availability slots by time range
             var filteredSlots = availabilitySlots
-                .Where(slot => slot.StartDate <= searchTimeDto.StartDate &&
-                               slot.EndDate >= searchTimeDto.EndDate &&
-                               slot.StartTime <= searchTimeDto.StartTime &&
-                               slot.EndTime >= searchTimeDto.EndTime)
+                .Where(slot =>
+                    slot.StartTime <= searchTimeDto.StartTime &&
+                    slot.EndTime >= searchTimeDto.EndTime)
                 .ToList();
 
             if (filteredSlots == null || filteredSlots.Count == 0)

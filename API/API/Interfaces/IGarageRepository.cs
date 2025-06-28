@@ -10,7 +10,7 @@ namespace API.Interfaces
         Task<Garage> CreateGarageAsync(CreateGarageDTO garageDTO, Guid userId);
         Task<Garage> UpdateGarageAsync(Guid garageId, GarageUpdateDTO garageDTO, Guid userId);
         Task<bool> DeleteGarageAsync(Guid garageId, Guid userId);
-        Task<AvailabilitySlot> CreateAvailabilitySlotsAsync(Guid garageId, CreateAvailabilitySlotDTO slotDTO, Guid userId);
+        Task<List<AvailabilitySlot>> CreateAvailabilitySlotsAsync(Guid garageId, CreateAvailabilitySlotDTO slotDTO, Guid userId);
         Task<IEnumerable<AvailabilitySlot>> GetAvailabilitySlotsByGarageIdAsync(Guid garageId);
         Task<bool> DeleteAvailabilitySlot(Guid slotId, Guid userId);
     }

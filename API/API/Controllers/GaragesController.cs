@@ -168,14 +168,21 @@ namespace API.Controllers
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdString == null) return Unauthorized();
             Guid userId = Guid.Parse(userIdString);
-
-            var createdSlot = await _garageRepository.CreateAvailabilitySlotsAsync(garageId, slotDTO, userId);
-            if (createdSlot == null)
+            
+            try 
+            { 
+                var createdSlot = await _garageRepository.CreateAvailabilitySlotsAsync(garageId, slotDTO, userId);
+                if (createdSlot == null)
+                {
+                    return NotFound("Garage not found or you do not have permission to create availability slots.");
+                }
+                return CreatedAtAction(nameof(GetGarage), new { id = garageId }, createdSlot);
+            } 
+            catch (ArgumentException ex)
             {
-                return NotFound("Garage not found or you do not have permission to create availability slots.");
+                return BadRequest($"Error creating availability slot: {ex.Message}");
             }
 
-            return CreatedAtAction(nameof(GetGarage), new { id = garageId }, createdSlot);
         }
 
         /// <summary>

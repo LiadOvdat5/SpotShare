@@ -30,10 +30,13 @@ namespace API.Repositories
             return bookings;
         }
 
-
-        public Task<Booking> GetBookingByIdAsync(Guid bookingId)
+        /// <summary>
+        /// Method: GetBookingByIdAsync
+        /// Description: Retrieves a booking by its unique identifier.
+        /// </summary>
+        public async Task<Booking> GetBookingByIdAsync(Guid bookingId)
         {
-            var booking = _context.Bookings
+            var booking = await _context.Bookings
                 .FirstOrDefaultAsync(b => b.Id == bookingId);
 
             if (booking == null)
@@ -41,8 +44,61 @@ namespace API.Repositories
 
             return booking;
         }
-        public Task<Booking> CreateBookingAsync(BookingCreateDTO bookingDTO, Guid userId)
+
+
+        public async Task<Booking> CreateBookingAsync(BookingCreateDTO bookingDTO, Guid userId)
         {
+            if(bookingDTO == null)
+                return null;
+
+
+            // Validate booking dates and times
+            if (bookingDTO.StartDate < DateTime.Now || bookingDTO.EndDate < bookingDTO.StartDate)
+                return null;
+
+            if (bookingDTO.StartTime < TimeSpan.Zero || bookingDTO.EndTime < bookingDTO.StartTime)
+                return null;
+
+
+            var garage = await _context.Garages.FindAsync(bookingDTO.GarageId);
+            if (garage == null)
+                return null;
+
+            // Check if the garage is available for the requested dates and times
+            /*
+            var existingSlot = await _context.AvailabilitySlots
+                .Where(a => a.GarageId == bookingDTO.GarageId &&
+                            (a.StartDate <= bookingDTO.EndDate && a.EndDate >= bookingDTO.StartDate) &&
+                            (a.StartTime <= bookingDTO.EndTime && a.EndTime >= bookingDTO.StartTime))
+                .FirstOrDefaultAsync();
+            
+            if(existingSlot == null)
+                return null; // No available slot found
+             */
+
+
+            // Calculate total price based on hours and days
+            decimal hoursPerDay = (decimal)(bookingDTO.EndTime - bookingDTO.StartTime).TotalHours;
+            int numberOfDays = (bookingDTO.StartDate - bookingDTO.EndDate).Days + 1;
+            decimal totalPrice = hoursPerDay * numberOfDays * garage.PricePerHour;
+
+            var booking = new Booking {
+                Id = new Guid(), 
+                GarageId = bookingDTO.GarageId,
+                RenterId = userId, 
+                StartDate = bookingDTO.StartDate,
+                EndDate = bookingDTO.EndDate,
+                StartTime = bookingDTO.StartTime,
+                EndTime = bookingDTO.EndTime,
+                TotalPrice = totalPrice,
+                Status = BookingStatus.Pending,
+                DateRequested = DateTime.Now,
+                DateUpdated = DateTime.Now
+            };
+
+            // Split the availability slot 
+            //TODO: create two function - split and add | for approve and cancel booking
+
             throw new NotImplementedException();
         }
 
@@ -67,5 +123,10 @@ namespace API.Repositories
         {
             throw new NotImplementedException();
         }
+
+
+
+
+
     }
 }
